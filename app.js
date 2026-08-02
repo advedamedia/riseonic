@@ -1,9 +1,12 @@
 /**
  * RISEONIC — Ultra-Premium Landing Page JavaScript
+ * Handles: sticky header, carousel, modals, forms, lightbox, FAQ, gallery filter,
+ *          video, scroll reveal, mobile nav, toast notifications.
  */
 
 'use strict';
 
+/* ─── Utility ─── */
 const $ = (sel, ctx = document) => ctx.querySelector(sel);
 const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 
@@ -15,19 +18,22 @@ function debounce(fn, ms = 100) {
   };
 }
 
+/* ─── Config ─── */
 const PHONE = '+919878249224';
 const WHATSAPP_BASE = `https://wa.me/${PHONE}`;
 
 /* ─── Sticky Header ─── */
 const siteHeader = $('#siteHeader');
+let lastScrollY = 0;
 
 function handleHeaderScroll() {
   const y = window.scrollY;
-  if (y > 40) {
+  if (y > 60) {
     siteHeader.classList.add('is-scrolled');
   } else {
     siteHeader.classList.remove('is-scrolled');
   }
+  lastScrollY = y;
 }
 
 window.addEventListener('scroll', debounce(handleHeaderScroll, 10), { passive: true });
@@ -38,32 +44,35 @@ const navToggle = $('#navToggle');
 const siteNav = $('#siteNav');
 
 function closeNav() {
-  siteNav?.classList.remove('is-open');
-  navToggle?.classList.remove('is-open');
-  navToggle?.setAttribute('aria-expanded', 'false');
+  siteNav.classList.remove('is-open');
+  navToggle.classList.remove('is-open');
+  navToggle.setAttribute('aria-expanded', 'false');
   document.body.style.overflow = '';
 }
 
 function openNav() {
-  siteNav?.classList.add('is-open');
-  navToggle?.classList.add('is-open');
-  navToggle?.setAttribute('aria-expanded', 'true');
+  siteNav.classList.add('is-open');
+  navToggle.classList.add('is-open');
+  navToggle.setAttribute('aria-expanded', 'true');
   document.body.style.overflow = 'hidden';
 }
 
-navToggle?.addEventListener('click', () => {
+navToggle.addEventListener('click', () => {
   const isOpen = navToggle.classList.contains('is-open');
   isOpen ? closeNav() : openNav();
 });
 
-$$('.site-nav a').forEach(link => link.addEventListener('click', closeNav));
+// Close nav on link click
+$$('.site-nav a').forEach(link => {
+  link.addEventListener('click', closeNav);
+});
 
+// Close nav on escape
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     closeNav();
     closeModal();
-    closeVideoModal();
-    closeMasterplanModal();
+    closeLightbox();
   }
 });
 
@@ -74,7 +83,6 @@ let currentSlide = 0;
 let carouselTimer = null;
 
 function goToSlide(index) {
-  if (!carouselSlides.length) return;
   carouselSlides[currentSlide].classList.remove('active');
   carouselDots[currentSlide]?.classList.remove('active');
   currentSlide = (index + carouselSlides.length) % carouselSlides.length;
@@ -82,18 +90,27 @@ function goToSlide(index) {
   carouselDots[currentSlide]?.classList.add('active');
 }
 
-function nextSlide() { goToSlide(currentSlide + 1); }
-function startCarousel() { carouselTimer = setInterval(nextSlide, 5000); }
+function nextSlide() {
+  goToSlide(currentSlide + 1);
+}
+
+function startCarousel() {
+  carouselTimer = setInterval(nextSlide, 5000);
+}
+
+function resetCarousel() {
+  clearInterval(carouselTimer);
+  startCarousel();
+}
 
 carouselDots.forEach((dot, i) => {
   dot.addEventListener('click', () => {
     goToSlide(i);
-    clearInterval(carouselTimer);
-    startCarousel();
+    resetCarousel();
   });
 });
 
-if (carouselSlides.length) startCarousel();
+startCarousel();
 
 /* ─── Configuration Tabs ─── */
 const configTabs = $$('.config-tab');
@@ -101,8 +118,8 @@ const configPanels = $$('.config-panel');
 
 configTabs.forEach(tab => {
   tab.addEventListener('click', () => {
-    const configKey = tab.dataset.config;
-    const targetPanel = $(`#panel-${configKey}`);
+    const targetId = `panel-${tab.dataset.config}`;
+    const targetPanel = $(`#${targetId}`);
 
     configTabs.forEach(t => {
       t.classList.remove('is-active');
@@ -116,7 +133,6 @@ configTabs.forEach(tab => {
 
     tab.classList.add('is-active');
     tab.setAttribute('aria-selected', 'true');
-
     if (targetPanel) {
       targetPanel.classList.add('is-active');
       targetPanel.hidden = false;
@@ -124,38 +140,32 @@ configTabs.forEach(tab => {
   });
 });
 
-/* ─── Enquiry Modal ─── */
+/* ─── Modal ─── */
 const modalOverlay = $('#modalOverlay');
 const modalClose = $('#modalClose');
-const modalTitle = $('#modalTitle');
-const modalConfigSelect = $('#modalConfigSelect');
+let selectedUnitType = '';
 
-function openModal(unitType = '', customTitle = 'Schedule a VIP Site Visit') {
-  if (modalTitle) modalTitle.textContent = customTitle;
-
-  if (modalConfigSelect) {
-    if (unitType) {
-      const match = [...modalConfigSelect.options].find(o =>
-        o.value && (unitType.toLowerCase().includes(o.value.toLowerCase()) || o.value.toLowerCase().includes(unitType.toLowerCase()))
-      );
-      if (match) modalConfigSelect.value = match.value;
-    } else {
-      modalConfigSelect.value = '';
+function openModal(unitType = '') {
+  selectedUnitType = unitType;
+  if (unitType) {
+    const select = $('#modalConfigSelect');
+    if (select) {
+      // Try to find matching option
+      const opts = [...select.options];
+      const match = opts.find(o => o.value && unitType.toLowerCase().includes(o.value.toLowerCase()));
+      if (match) select.value = match.value;
     }
   }
-
-  if (modalOverlay) {
-    modalOverlay.hidden = false;
-    document.body.style.overflow = 'hidden';
-    setTimeout(() => $('#modalName')?.focus(), 100);
-  }
+  modalOverlay.hidden = false;
+  document.body.style.overflow = 'hidden';
+  requestAnimationFrame(() => {
+    $('#modalName')?.focus();
+  });
 }
 
 function closeModal() {
-  if (modalOverlay) {
-    modalOverlay.hidden = true;
-    document.body.style.overflow = '';
-  }
+  modalOverlay.hidden = true;
+  document.body.style.overflow = '';
 }
 
 modalClose?.addEventListener('click', closeModal);
@@ -163,75 +173,18 @@ modalOverlay?.addEventListener('click', (e) => {
   if (e.target === modalOverlay) closeModal();
 });
 
-// Triggers for Enquiry Modal
-$('#heroSiteVisitBtn')?.addEventListener('click', () => openModal('', 'Schedule a VIP Site Visit'));
-$('#headerEnquireBtn')?.addEventListener('click', () => openModal('', 'Enquire About RISEONIC'));
-$('#mobileEnquireBtn')?.addEventListener('click', () => openModal('', 'Book a Site Visit'));
-
-$$('[data-action="enquire"]').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    e.preventDefault();
-    const unitType = btn.dataset.unitType || '';
-    openModal(unitType, 'Get Price & Configuration Details');
+// All enquire triggers
+$$('[data-action="enquire"]').forEach(el => {
+  el.addEventListener('click', () => {
+    openModal(el.dataset.unitType || '');
   });
 });
 
-/* ─── Video Lead Modal ─── */
-const videoModal = $('#videoModal');
-const videoModalClose = $('#videoModalClose');
-const videoThumb = $('#videoThumb');
-const videoPlayBtn = $('#videoPlayBtn');
-const videoIframeWrapper = $('#videoIframeWrapper');
-const youtubeIframe = $('#youtubeIframe');
-
-function openVideoModal() {
-  if (videoModal) {
-    videoModal.hidden = false;
-    document.body.style.overflow = 'hidden';
-    setTimeout(() => $('#videoLeadName')?.focus(), 100);
-  }
-}
-
-function closeVideoModal() {
-  if (videoModal) {
-    videoModal.hidden = true;
-    document.body.style.overflow = '';
-  }
-}
-
-videoPlayBtn?.addEventListener('click', openVideoModal);
-videoThumb?.addEventListener('click', openVideoModal);
-videoModalClose?.addEventListener('click', closeVideoModal);
-videoModal?.addEventListener('click', (e) => {
-  if (e.target === videoModal) closeVideoModal();
-});
-
-function playVideo() {
-  if (videoThumb) videoThumb.style.display = 'none';
-  if (videoIframeWrapper) videoIframeWrapper.hidden = false;
-  if (youtubeIframe) youtubeIframe.src = youtubeIframe.dataset.src;
-}
-
-$('#videoLeadForm')?.addEventListener('submit', (e) => {
-  e.preventDefault();
-  const name = $('#videoLeadName')?.value.trim();
-  const phone = $('#videoLeadPhone')?.value.trim();
-
-  if (!name || !phone || phone.replace(/\D/g, '').length < 10) {
-    alert('Please enter a valid Name and 10-digit Mobile Number.');
-    return;
-  }
-
-  // Route lead to WhatsApp
-  const msg = encodeURIComponent(
-    `Hi! I watched the RISEONIC Walkthrough Video.\n\nName: ${name}\nPhone: +91 ${phone}\n\nPlease share price list.`
-  );
-  window.open(`${WHATSAPP_BASE}?text=${msg}`, '_blank', 'noopener,noreferrer');
-
-  closeVideoModal();
-  playVideo();
-  showToast('✓ Access granted! Enjoy the walkthrough video.');
-});
+// Header/hero/section CTAs
+$('#heroSiteVisitBtn')?.addEventListener('click', () => openModal());
+$('#headerEnquireBtn')?.addEventListener('click', () => openModal());
+$('#lifestyleEnquireBtn')?.addEventListener('click', () => openModal('Brochure Request'));
+$('#mobileEnquireBtn')?.addEventListener('click', () => openModal());
 
 /* ─── Master Plan Modal ─── */
 const masterplanModal = $('#masterplanModal');
@@ -239,22 +192,126 @@ const masterplanZoom = $('#masterplanZoom');
 const masterplanClose = $('#masterplanClose');
 
 masterplanZoom?.addEventListener('click', () => {
-  if (masterplanModal) {
-    masterplanModal.hidden = false;
-    document.body.style.overflow = 'hidden';
-  }
+  masterplanModal.hidden = false;
+  document.body.style.overflow = 'hidden';
 });
 
-function closeMasterplanModal() {
-  if (masterplanModal) {
+masterplanClose?.addEventListener('click', () => {
+  masterplanModal.hidden = true;
+  document.body.style.overflow = '';
+});
+
+masterplanModal?.addEventListener('click', (e) => {
+  if (e.target === masterplanModal) {
     masterplanModal.hidden = true;
     document.body.style.overflow = '';
   }
+});
+
+/* ─── Video Player ─── */
+const videoThumb = $('#videoThumb');
+const videoPlayBtn = $('#videoPlayBtn');
+const videoIframeWrapper = $('#videoIframeWrapper');
+const youtubeIframe = $('#youtubeIframe');
+
+function initVideo() {
+  videoThumb.style.display = 'none';
+  videoIframeWrapper.hidden = false;
+  youtubeIframe.src = youtubeIframe.dataset.src;
 }
 
-masterplanClose?.addEventListener('click', closeMasterplanModal);
-masterplanModal?.addEventListener('click', (e) => {
-  if (e.target === masterplanModal) closeMasterplanModal();
+videoPlayBtn?.addEventListener('click', initVideo);
+videoPlayBtn?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); initVideo(); }
+});
+
+/* ─── Gallery Filter & Lightbox ─── */
+const galleryFilterBtns = $$('.gallery-filter-btn');
+const galleryItems = $$('.gallery-item');
+const lightbox = $('#lightbox');
+const lightboxImg = $('#lightboxImg');
+const lightboxCaption = $('#lightboxCaption');
+const lightboxClose = $('#lightboxClose');
+const lightboxOverlay = $('#lightboxOverlay');
+const lightboxPrev = $('#lightboxPrev');
+const lightboxNext = $('#lightboxNext');
+let currentLightboxIndex = 0;
+let visibleItems = [...galleryItems];
+
+// Gallery Filter
+galleryFilterBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    galleryFilterBtns.forEach(b => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+
+    const filter = btn.dataset.filter;
+    visibleItems = [];
+
+    galleryItems.forEach(item => {
+      const cat = item.dataset.category;
+      if (filter === 'all' || cat === filter) {
+        item.hidden = false;
+        visibleItems.push(item);
+      } else {
+        item.hidden = true;
+      }
+    });
+  });
+});
+
+// Open Lightbox
+function openLightbox(index) {
+  const item = visibleItems[index];
+  if (!item) return;
+  const img = $('img', item);
+  const cap = $('figcaption', item);
+  lightboxImg.src = img.src;
+  lightboxImg.alt = img.alt;
+  lightboxCaption.textContent = cap?.textContent || '';
+  currentLightboxIndex = index;
+  lightbox.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  lightbox.hidden = true;
+  document.body.style.overflow = '';
+  lightboxImg.src = '';
+}
+
+function lightboxNavigate(dir) {
+  currentLightboxIndex = (currentLightboxIndex + dir + visibleItems.length) % visibleItems.length;
+  openLightbox(currentLightboxIndex);
+}
+
+galleryItems.forEach((item, i) => {
+  item.addEventListener('click', () => {
+    const vi = visibleItems.indexOf(item);
+    if (vi !== -1) openLightbox(vi);
+  });
+  item.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); item.click(); }
+  });
+});
+
+lightboxClose?.addEventListener('click', closeLightbox);
+lightboxOverlay?.addEventListener('click', closeLightbox);
+lightboxPrev?.addEventListener('click', () => lightboxNavigate(-1));
+lightboxNext?.addEventListener('click', () => lightboxNavigate(1));
+
+document.addEventListener('keydown', (e) => {
+  if (!lightbox.hidden) {
+    if (e.key === 'ArrowLeft') lightboxNavigate(-1);
+    if (e.key === 'ArrowRight') lightboxNavigate(1);
+  }
+});
+
+// Touch swipe for lightbox
+let touchStartX = 0;
+lightbox?.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].clientX; }, { passive: true });
+lightbox?.addEventListener('touchend', (e) => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 50) lightboxNavigate(dx < 0 ? 1 : -1);
 });
 
 /* ─── FAQ Accordion ─── */
@@ -267,6 +324,7 @@ faqItems.forEach(item => {
   btn?.addEventListener('click', () => {
     const isOpen = btn.getAttribute('aria-expanded') === 'true';
 
+    // Close all others
     faqItems.forEach(other => {
       if (other !== item) {
         $('.faq-question', other)?.setAttribute('aria-expanded', 'false');
@@ -275,7 +333,7 @@ faqItems.forEach(item => {
     });
 
     btn.setAttribute('aria-expanded', String(!isOpen));
-    answer?.classList.toggle('is-open', !isOpen);
+    answer.classList.toggle('is-open', !isOpen);
   });
 });
 
@@ -284,45 +342,76 @@ const toast = $('#toast');
 const toastMessage = $('#toastMessage');
 let toastTimeout = null;
 
-function showToast(message = 'Thank you! We\'ll be in touch shortly.') {
+function showToast(message = 'Thank you! We'll be in touch shortly.') {
   if (!toast) return;
   clearTimeout(toastTimeout);
-  if (toastMessage) toastMessage.textContent = message;
+  toastMessage.textContent = message;
   toast.classList.add('is-visible');
-  toastTimeout = setTimeout(() => toast.classList.remove('is-visible'), 4000);
+  toastTimeout = setTimeout(() => toast.classList.remove('is-visible'), 4500);
 }
 
-/* ─── Form Submission Handler ─── */
+/* ─── Form Submission ─── */
 function handleFormSubmit(form) {
   const nameInput = form.querySelector('input[name="name"]');
   const phoneInput = form.querySelector('input[name="phone"]');
-  const configInput = form.querySelector('select[name="config"]');
+  const submitBtn = form.querySelector('button[type="submit"]');
 
   const name = nameInput?.value.trim() || '';
   const phone = phoneInput?.value.trim() || '';
-  const config = configInput?.value || '';
 
+  // Basic validation
   if (!name) {
     nameInput?.focus();
+    nameInput?.classList.add('input-error');
+    setTimeout(() => nameInput?.classList.remove('input-error'), 2000);
     return;
   }
 
   if (!phone || phone.replace(/\D/g, '').length < 10) {
     phoneInput?.focus();
+    phoneInput?.classList.add('input-error');
+    setTimeout(() => phoneInput?.classList.remove('input-error'), 2000);
     return;
   }
 
+  // Disable button
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending...';
+  }
+
+  // Build WhatsApp message
+  const configEl = form.querySelector('select[name="config"]');
+  const config = configEl?.value || selectedUnitType || '';
+  const formId = form.id || 'lead';
   const msg = encodeURIComponent(
-    `Hi! I'm interested in RISEONIC New Chandigarh.\n\nName: ${name}\nPhone: +91 ${phone}${config ? `\nConfiguration: ${config}` : ''}\n\nPlease share price & site visit details.`
+    `Hi! I'm interested in RISEONIC New Chandigarh.\n\nName: ${name}\nPhone: +91 ${phone}${config ? `\nInterested in: ${config}` : ''}\n\nPlease share details.`
   );
 
+  // Send to WhatsApp
   window.open(`${WHATSAPP_BASE}?text=${msg}`, '_blank', 'noopener,noreferrer');
 
+  // Reset
   form.reset();
-  if (form.id === 'modalForm') closeModal();
-  showToast('✓ Thank you! Our team will contact you shortly.');
+  if (submitBtn) {
+    submitBtn.disabled = false;
+    submitBtn.textContent = submitBtn.dataset.originalText || 'Submit';
+  }
+
+  // Close modal if modal form
+  if (form.id === 'modalForm') {
+    setTimeout(closeModal, 400);
+  }
+
+  showToast('✓ Thank you! We\'ll be in touch within a few hours.');
 }
 
+// Store original button texts
+$$('button[type="submit"]').forEach(btn => {
+  btn.dataset.originalText = btn.textContent.trim();
+});
+
+// Attach form handlers
 ['heroForm', 'modalForm', 'contactForm'].forEach(id => {
   const form = $(`#${id}`);
   form?.addEventListener('submit', (e) => {
@@ -330,6 +419,21 @@ function handleFormSubmit(form) {
     handleFormSubmit(form);
   });
 });
+
+// Input error style (inline)
+const style = document.createElement('style');
+style.textContent = `
+  .input-error {
+    border-color: #ff4444 !important;
+    animation: shake 0.4s ease;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+`;
+document.head.appendChild(style);
 
 /* ─── Scroll Reveal ─── */
 const revealEls = $$('.reveal-left, .reveal-right, .reveal-up');
@@ -343,22 +447,141 @@ const revealObserver = new IntersectionObserver(
       }
     });
   },
-  { threshold: 0.1 }
+  { threshold: 0.12, rootMargin: '0px 0px -48px 0px' }
 );
 
 revealEls.forEach(el => revealObserver.observe(el));
 
-/* ─── Smooth Scroll ─── */
+/* ─── Animate Quick Fact Numbers ─── */
+function animateCounter(el, target, duration = 1600) {
+  const isFloat = target.toString().includes('.');
+  const parts = target.toString().split('.');
+  const decimals = isFloat ? parts[1].length : 0;
+  const start = performance.now();
+  const startVal = 0;
+
+  function tick(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const val = startVal + (parseFloat(target) - startVal) * eased;
+    el.textContent = isFloat ? val.toFixed(decimals) : Math.round(val);
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+
+  requestAnimationFrame(tick);
+}
+
+const quickFactNums = $$('.quick-fact-num');
+let factsAnimated = false;
+
+const factsObserver = new IntersectionObserver(
+  (entries) => {
+    if (entries[0].isIntersecting && !factsAnimated) {
+      factsAnimated = true;
+      quickFactNums.forEach(el => {
+        const text = el.textContent.trim();
+        const numMatch = text.match(/^[\d.]+/);
+        if (numMatch) {
+          const num = parseFloat(numMatch[0]);
+          const suffix = text.replace(numMatch[0], '');
+          animateCounter({ textContent: '' }, num, 1800); // temp
+          // Real animation preserving suffix
+          let startTime = null;
+          function frame(ts) {
+            if (!startTime) startTime = ts;
+            const progress = Math.min((ts - startTime) / 1800, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const val = num * eased;
+            el.textContent = (num % 1 !== 0 ? val.toFixed(2) : Math.round(val)) + suffix;
+            if (progress < 1) requestAnimationFrame(frame);
+          }
+          requestAnimationFrame(frame);
+        }
+      });
+      factsObserver.disconnect();
+    }
+  },
+  { threshold: 0.5 }
+);
+
+const quickFacts = $('#quick-facts');
+if (quickFacts) factsObserver.observe(quickFacts);
+
+/* ─── Active Nav Highlight on Scroll ─── */
+const navLinks = $$('.site-nav a');
+const sections = $$('section[id]');
+
+function updateActiveNav() {
+  const scrollY = window.scrollY + 120;
+  let active = '';
+
+  sections.forEach(section => {
+    const top = section.offsetTop;
+    const height = section.offsetHeight;
+    if (scrollY >= top && scrollY < top + height) {
+      active = section.id;
+    }
+  });
+
+  navLinks.forEach(link => {
+    const href = link.getAttribute('href')?.replace('#', '');
+    link.classList.toggle('nav-active', href === active);
+  });
+}
+
+// Add active nav style
+const navStyle = document.createElement('style');
+navStyle.textContent = `.site-nav a.nav-active { color: var(--gold-300) !important; }`;
+document.head.appendChild(navStyle);
+
+window.addEventListener('scroll', debounce(updateActiveNav, 50), { passive: true });
+
+/* ─── Smooth Scroll Polyfill ─── */
 $$('a[href^="#"]').forEach(link => {
   link.addEventListener('click', (e) => {
-    const href = link.getAttribute('href');
-    if (!href || href === '#') return;
-    const target = $(href);
+    const target = $(link.getAttribute('href'));
     if (!target) return;
     e.preventDefault();
-    const top = target.getBoundingClientRect().top + window.scrollY - 68;
+    const top = target.getBoundingClientRect().top + window.scrollY - 72;
     window.scrollTo({ top, behavior: 'smooth' });
   });
 });
 
-console.log('RISEONIC Landing Page JS Initialized.');
+/* ─── Lazy Load Images (native + observer fallback) ─── */
+if ('loading' in HTMLImageElement.prototype) {
+  // Native lazy loading already applied via HTML attribute
+} else {
+  const lazyImages = $$('img[loading="lazy"]');
+  const imgObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const img = entry.target;
+        img.src = img.dataset.src || img.src;
+        imgObserver.unobserve(img);
+      }
+    });
+  });
+  lazyImages.forEach(img => imgObserver.observe(img));
+}
+
+/* ─── WhatsApp Float Button (hidden — using sticky bar instead on mobile) ─── */
+// The mobile sticky bar handles WhatsApp on mobile.
+// On desktop, the header button is always visible.
+
+/* ─── Page Visibility / Pause Carousel ─── */
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    clearInterval(carouselTimer);
+  } else {
+    startCarousel();
+  }
+});
+
+/* ─── Init Complete Log ─── */
+console.log(
+  '%cRISEONIC%c | New Chandigarh\n%cTriCity\'s First Terrace Homes · G+35 Floors · Stadium Road PR-4',
+  'color: #B8975A; font-size: 20px; font-weight: bold; font-family: serif;',
+  'color: #888; font-size: 12px;',
+  'color: #555; font-size: 11px;'
+);
