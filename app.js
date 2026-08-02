@@ -20,105 +20,56 @@ document.addEventListener('DOMContentLoaded', () => {
   // Close Modal
   if (modalClose) {
     modalClose.addEventListener('click', () => {
-      modalOverlay.classList.remove('active');
+      if (modalOverlay) modalOverlay.classList.remove('active');
     });
   }
 
-  modalOverlay.addEventListener('click', (e) => {
-    if (e.target === modalOverlay) {
-      modalOverlay.classList.remove('active');
-    }
-  });
-
-  // Overview Section Auto-Scrolling Multi-Image Carousel (Using Live Assets)
-  const mainFeaturedImg = document.getElementById('mainFeaturedImg');
-  const mainFeaturedBadge = document.getElementById('mainFeaturedBadge');
-  const thumbCards = document.querySelectorAll('.thumb-card');
-  const dots = document.querySelectorAll('.gallery-dots .dot');
-
-  const galleryData = [
-    {
-      src: 'assets/live_riseonic-building.jpg',
-      badge: 'G+35 Iconic Tower Elevation',
-      title: 'TriCity Tallest Landmark Skyview'
-    },
-    {
-      src: 'assets/live_1000321094.jpg',
-      badge: 'Luxury Living Lounge & Foyer',
-      title: 'Palatial Interior Living Spaces'
-    },
-    {
-      src: 'assets/live_1000321095.jpg',
-      badge: 'Panoramic Terrace Garden',
-      title: 'Terraces That Whisper Tranquillity'
-    },
-    {
-      src: 'assets/lady_terrace_clean.jpg',
-      badge: 'TriCity 1st Sky Terrace',
-      title: 'First-Ever Terrace Homes in TriCity'
-    }
-  ];
-
-  let currentSlide = 0;
-  let autoSlideTimer = null;
-
-  function updateGallerySlide(index) {
-    currentSlide = index;
-    const slide = galleryData[index];
-    if (!slide) return;
-
-    if (mainFeaturedImg) {
-      mainFeaturedImg.style.opacity = '0.3';
-      setTimeout(() => {
-        mainFeaturedImg.src = slide.src;
-        mainFeaturedImg.style.opacity = '1';
-      }, 150);
-    }
-
-    if (mainFeaturedBadge) {
-      mainFeaturedBadge.innerText = slide.badge;
-    }
-
-    thumbCards.forEach((card, idx) => {
-      if (idx === index) card.classList.add('active');
-      else card.classList.remove('active');
-    });
-
-    dots.forEach((dot, idx) => {
-      if (idx === index) dot.classList.add('active');
-      else dot.classList.remove('active');
+  if (modalOverlay) {
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) {
+        modalOverlay.classList.remove('active');
+      }
     });
   }
 
-  function startAutoSlide() {
-    stopAutoSlide();
-    autoSlideTimer = setInterval(() => {
-      let nextIndex = (currentSlide + 1) % galleryData.length;
-      updateGallerySlide(nextIndex);
-    }, 3500);
-  }
+  // Full Image Lightbox Modal for Gallery Grid
+  const lightboxModal = document.getElementById('galleryLightbox');
+  const lightboxImg = document.getElementById('lightboxImg');
+  const lightboxCaption = document.getElementById('lightboxCaption');
 
-  function stopAutoSlide() {
-    if (autoSlideTimer) clearInterval(autoSlideTimer);
-  }
+  window.openLightbox = function(src, captionText) {
+    if (lightboxImg) lightboxImg.src = src;
+    if (lightboxCaption) lightboxCaption.innerText = captionText;
+    if (lightboxModal) lightboxModal.classList.add('active');
+  };
 
-  thumbCards.forEach((card) => {
-    card.addEventListener('click', () => {
-      const idx = parseInt(card.dataset.index, 10);
-      updateGallerySlide(idx);
-      startAutoSlide();
+  window.closeLightbox = function() {
+    if (lightboxModal) lightboxModal.classList.remove('active');
+  };
+
+  // Gallery Filter Nav Switcher
+  const filterBtns = document.querySelectorAll('.gallery-filter-btn');
+  const galleryItems = document.querySelectorAll('.photo-gallery-item');
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const filter = btn.dataset.filter;
+
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      galleryItems.forEach(item => {
+        const category = item.dataset.category;
+        if (filter === 'all' || category === filter) {
+          item.style.display = 'block';
+          setTimeout(() => item.style.opacity = '1', 50);
+        } else {
+          item.style.opacity = '0';
+          setTimeout(() => item.style.display = 'none', 300);
+        }
+      });
     });
   });
-
-  dots.forEach((dot) => {
-    dot.addEventListener('click', () => {
-      const idx = parseInt(dot.dataset.index, 10);
-      updateGallerySlide(idx);
-      startAutoSlide();
-    });
-  });
-
-  startAutoSlide();
 
   // Floor Plan Tab Switcher
   const tabBtns = document.querySelectorAll('.tab-btn');
@@ -141,11 +92,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const faqItems = document.querySelectorAll('.faq-item');
   faqItems.forEach(item => {
     const question = item.querySelector('.faq-question');
-    question.addEventListener('click', () => {
-      const isActive = item.classList.contains('active');
-      faqItems.forEach(i => i.classList.remove('active'));
-      if (!isActive) item.classList.add('active');
-    });
+    if (question) {
+      question.addEventListener('click', () => {
+        const isActive = item.classList.contains('active');
+        faqItems.forEach(i => i.classList.remove('active'));
+        if (!isActive) item.classList.add('active');
+      });
+    }
   });
 
   // Form Submission Handlers
