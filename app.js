@@ -1,415 +1,587 @@
 /**
- * RISEONIC New Chandigarh — app.js
- * Handles: sticky header, mobile nav, modals, forms,
- *          virtual tour gate, gallery lightbox, gallery filter,
- *          config tabs, FAQ accordion, social proof toast
+ * RISEONIC — Ultra-Premium Landing Page JavaScript
+ * Handles: sticky header, carousel, modals, forms, lightbox, FAQ, gallery filter,
+ *          video, scroll reveal, mobile nav, toast notifications.
  */
 
-// ======================================================
-// YOUTUBE VIDEO ID — Replace with actual video ID
-// ======================================================
-const YOUTUBE_VIDEO_ID = 'Pvy_JEBclIM'; // Replace with your actual YouTube video ID
+'use strict';
 
-// ======================================================
-// DOM REFERENCES
-// ======================================================
-const siteHeader    = document.getElementById('siteHeader');
-const navToggle     = document.getElementById('navToggle');
-const siteNav       = document.getElementById('siteNav');
+/* ─── Utility ─── */
+const $ = (sel, ctx = document) => ctx.querySelector(sel);
+const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 
-const enquireModal      = document.getElementById('enquireModal');
-const enquireModalClose = document.getElementById('enquireModalClose');
-const enquireModalTitle = document.getElementById('enquireModalTitle');
-const enquireModalSub   = document.getElementById('enquireModalSubtitle');
-const enquireModalForm  = document.getElementById('enquireModalForm');
-const modalSubmitBtn    = document.getElementById('modalSubmitBtn');
-const modalUnitSelect   = document.getElementById('modalUnit');
-
-const tourGateModal     = document.getElementById('tourGateModal');
-const tourGateModalClose = document.getElementById('tourGateModalClose');
-const tourGateForm      = document.getElementById('tourGateForm');
-
-const videoModal     = document.getElementById('videoModal');
-const videoModalClose = document.getElementById('videoModalClose');
-const videoIframe    = document.getElementById('videoIframe');
-
-const galleryLightbox = document.getElementById('galleryLightbox');
-const lightboxClose   = document.getElementById('lightboxClose');
-const lightboxImg     = document.getElementById('lightboxImg');
-const lightboxCaption = document.getElementById('lightboxCaption');
-
-const socialToast = document.getElementById('socialToast');
-const toastText   = document.getElementById('toastText');
-const toastDot    = document.getElementById('toastDot');
-
-const heroForm    = document.getElementById('heroForm');
-const contactForm = document.getElementById('contactForm');
-
-// Mobile hello bar buttons
-const helloCallBtn    = document.getElementById('helloCallBtn');
-const helloInquiryBtn = document.getElementById('helloInquiryBtn');
-const headerCallBtn   = document.getElementById('headerCallBtn');
-const headerEnquireBtn = document.getElementById('headerEnquireBtn');
-const requestCallbackBtn = document.getElementById('requestCallbackBtn');
-
-// Virtual tour buttons
-const virtualTourThumb = document.getElementById('virtualTourThumb');
-const openVirtualTourBtn = document.getElementById('openVirtualTourBtn');
-
-// Set YouTube thumbnail as tour background
-if (virtualTourThumb && YOUTUBE_VIDEO_ID) {
-  virtualTourThumb.style.backgroundImage = `url('https://img.youtube.com/vi/${YOUTUBE_VIDEO_ID}/maxresdefault.jpg')`;
+function debounce(fn, ms = 100) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), ms);
+  };
 }
 
-// ======================================================
-// STICKY HEADER
-// ======================================================
-const handleScroll = () => {
-  if (window.scrollY > 60) {
-    siteHeader?.classList.add('is-scrolled');
+/* ─── Config ─── */
+const PHONE = '+919878249224';
+const WHATSAPP_BASE = `https://wa.me/${PHONE}`;
+
+/* ─── Sticky Header ─── */
+const siteHeader = $('#siteHeader');
+let lastScrollY = 0;
+
+function handleHeaderScroll() {
+  const y = window.scrollY;
+  if (y > 60) {
+    siteHeader.classList.add('is-scrolled');
   } else {
-    siteHeader?.classList.remove('is-scrolled');
+    siteHeader.classList.remove('is-scrolled');
   }
-};
-window.addEventListener('scroll', handleScroll, { passive: true });
-handleScroll();
-
-// ======================================================
-// MOBILE NAV TOGGLE
-// ======================================================
-navToggle?.addEventListener('click', () => {
-  const isOpen = siteNav?.classList.toggle('is-open');
-  navToggle.classList.toggle('is-open', isOpen);
-  navToggle.setAttribute('aria-expanded', String(isOpen));
-  document.body.style.overflow = isOpen ? 'hidden' : '';
-});
-
-// Close nav on link click
-siteNav?.querySelectorAll('a').forEach(link => {
-  link.addEventListener('click', () => {
-    siteNav.classList.remove('is-open');
-    navToggle?.classList.remove('is-open');
-    navToggle?.setAttribute('aria-expanded', 'false');
-    document.body.style.overflow = '';
-  });
-});
-
-// ======================================================
-// MODAL OPEN / CLOSE UTILITIES
-// ======================================================
-function openModal(el) {
-  el?.classList.add('is-open');
-  document.body.style.overflow = 'hidden';
+  lastScrollY = y;
 }
-function closeModal(el) {
-  el?.classList.remove('is-open');
+
+window.addEventListener('scroll', debounce(handleHeaderScroll, 10), { passive: true });
+handleHeaderScroll();
+
+/* ─── Mobile Nav Toggle ─── */
+const navToggle = $('#navToggle');
+const siteNav = $('#siteNav');
+
+function closeNav() {
+  siteNav.classList.remove('is-open');
+  navToggle.classList.remove('is-open');
+  navToggle.setAttribute('aria-expanded', 'false');
   document.body.style.overflow = '';
 }
 
-// Close modal on overlay click
-[enquireModal, tourGateModal, videoModal, galleryLightbox].forEach(m => {
-  m?.addEventListener('click', e => {
-    if (e.target === m) {
-      if (m === videoModal) stopVideo();
-      closeModal(m);
-    }
-  });
+function openNav() {
+  siteNav.classList.add('is-open');
+  navToggle.classList.add('is-open');
+  navToggle.setAttribute('aria-expanded', 'true');
+  document.body.style.overflow = 'hidden';
+}
+
+navToggle.addEventListener('click', () => {
+  const isOpen = navToggle.classList.contains('is-open');
+  isOpen ? closeNav() : openNav();
 });
 
-// Close buttons
-enquireModalClose?.addEventListener('click', () => closeModal(enquireModal));
-tourGateModalClose?.addEventListener('click', () => closeModal(tourGateModal));
-videoModalClose?.addEventListener('click', () => { stopVideo(); closeModal(videoModal); });
-lightboxClose?.addEventListener('click', () => closeModal(galleryLightbox));
+// Close nav on link click
+$$('.site-nav a').forEach(link => {
+  link.addEventListener('click', closeNav);
+});
 
-// ESC key to close
-document.addEventListener('keydown', e => {
+// Close nav on escape
+document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    [enquireModal, tourGateModal, galleryLightbox].forEach(closeModal);
-    stopVideo();
-    closeModal(videoModal);
+    closeNav();
+    closeModal();
+    closeLightbox();
   }
 });
 
-// ======================================================
-// ENQUIRE MODAL — open with context
-// ======================================================
-function openEnquireModal(config = {}) {
-  const title    = config.title    || 'Request Callback';
-  const subtitle = config.subtitle || 'Share your details and our senior luxury consultant will reach out within a few hours.';
-  const btnText  = config.btnText  || 'Request Callback';
-  const unitVal  = config.unit     || '';
+/* ─── Hero Carousel ─── */
+const carouselSlides = $$('.carousel-slide');
+const carouselDots = $$('.carousel-dot');
+let currentSlide = 0;
+let carouselTimer = null;
 
-  if (enquireModalTitle) enquireModalTitle.textContent = title;
-  if (enquireModalSub)   enquireModalSub.textContent   = subtitle;
-  if (modalSubmitBtn)    modalSubmitBtn.textContent    = btnText;
-  if (unitVal && modalUnitSelect) {
-    for (let opt of modalUnitSelect.options) {
-      if (opt.value === unitVal) { opt.selected = true; break; }
+function goToSlide(index) {
+  carouselSlides[currentSlide].classList.remove('active');
+  carouselDots[currentSlide]?.classList.remove('active');
+  currentSlide = (index + carouselSlides.length) % carouselSlides.length;
+  carouselSlides[currentSlide].classList.add('active');
+  carouselDots[currentSlide]?.classList.add('active');
+}
+
+function nextSlide() {
+  goToSlide(currentSlide + 1);
+}
+
+function startCarousel() {
+  carouselTimer = setInterval(nextSlide, 5000);
+}
+
+function resetCarousel() {
+  clearInterval(carouselTimer);
+  startCarousel();
+}
+
+carouselDots.forEach((dot, i) => {
+  dot.addEventListener('click', () => {
+    goToSlide(i);
+    resetCarousel();
+  });
+});
+
+startCarousel();
+
+/* ─── Configuration Tabs ─── */
+const configTabs = $$('.config-tab');
+const configPanels = $$('.config-panel');
+
+configTabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    const targetId = `panel-${tab.dataset.config}`;
+    const targetPanel = $(`#${targetId}`);
+
+    configTabs.forEach(t => {
+      t.classList.remove('is-active');
+      t.setAttribute('aria-selected', 'false');
+    });
+
+    configPanels.forEach(p => {
+      p.classList.remove('is-active');
+      p.hidden = true;
+    });
+
+    tab.classList.add('is-active');
+    tab.setAttribute('aria-selected', 'true');
+    if (targetPanel) {
+      targetPanel.classList.add('is-active');
+      targetPanel.hidden = false;
+    }
+  });
+});
+
+/* ─── Modal ─── */
+const modalOverlay = $('#modalOverlay');
+const modalClose = $('#modalClose');
+let selectedUnitType = '';
+
+function openModal(unitType = '') {
+  selectedUnitType = unitType;
+  if (unitType) {
+    const select = $('#modalConfigSelect');
+    if (select) {
+      // Try to find matching option
+      const opts = [...select.options];
+      const match = opts.find(o => o.value && unitType.toLowerCase().includes(o.value.toLowerCase()));
+      if (match) select.value = match.value;
     }
   }
-  openModal(enquireModal);
+  modalOverlay.hidden = false;
+  document.body.style.overflow = 'hidden';
+  requestAnimationFrame(() => {
+    $('#modalName')?.focus();
+  });
 }
 
-// Wire up all [data-action="enquire"] buttons
-document.querySelectorAll('[data-action="enquire"]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const unitType = btn.dataset.unitType || '';
-    openEnquireModal({
-      unit: unitType,
-      title: unitType ? `Get Price Details — ${unitType}` : 'Request Callback',
-      btnText: 'Get Price Details',
-    });
+function closeModal() {
+  modalOverlay.hidden = true;
+  document.body.style.overflow = '';
+}
+
+modalClose?.addEventListener('click', closeModal);
+modalOverlay?.addEventListener('click', (e) => {
+  if (e.target === modalOverlay) closeModal();
+});
+
+// All enquire triggers
+$$('[data-action="enquire"]').forEach(el => {
+  el.addEventListener('click', () => {
+    openModal(el.dataset.unitType || '');
   });
 });
 
-// Wire up [data-action="brochure"] buttons
-document.querySelectorAll('[data-action="brochure"]').forEach(btn => {
+// Header/hero/section CTAs
+$('#heroSiteVisitBtn')?.addEventListener('click', () => openModal());
+$('#headerEnquireBtn')?.addEventListener('click', () => openModal());
+$('#lifestyleEnquireBtn')?.addEventListener('click', () => openModal('Brochure Request'));
+$('#mobileEnquireBtn')?.addEventListener('click', () => openModal());
+
+/* ─── Master Plan Modal ─── */
+const masterplanModal = $('#masterplanModal');
+const masterplanZoom = $('#masterplanZoom');
+const masterplanClose = $('#masterplanClose');
+
+masterplanZoom?.addEventListener('click', () => {
+  masterplanModal.hidden = false;
+  document.body.style.overflow = 'hidden';
+});
+
+masterplanClose?.addEventListener('click', () => {
+  masterplanModal.hidden = true;
+  document.body.style.overflow = '';
+});
+
+masterplanModal?.addEventListener('click', (e) => {
+  if (e.target === masterplanModal) {
+    masterplanModal.hidden = true;
+    document.body.style.overflow = '';
+  }
+});
+
+/* ─── Video Player ─── */
+const videoThumb = $('#videoThumb');
+const videoPlayBtn = $('#videoPlayBtn');
+const videoIframeWrapper = $('#videoIframeWrapper');
+const youtubeIframe = $('#youtubeIframe');
+
+function initVideo() {
+  videoThumb.style.display = 'none';
+  videoIframeWrapper.hidden = false;
+  youtubeIframe.src = youtubeIframe.dataset.src;
+}
+
+videoPlayBtn?.addEventListener('click', initVideo);
+videoPlayBtn?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); initVideo(); }
+});
+
+/* ─── Gallery Filter & Lightbox ─── */
+const galleryFilterBtns = $$('.gallery-filter-btn');
+const galleryItems = $$('.gallery-item');
+const lightbox = $('#lightbox');
+const lightboxImg = $('#lightboxImg');
+const lightboxCaption = $('#lightboxCaption');
+const lightboxClose = $('#lightboxClose');
+const lightboxOverlay = $('#lightboxOverlay');
+const lightboxPrev = $('#lightboxPrev');
+const lightboxNext = $('#lightboxNext');
+let currentLightboxIndex = 0;
+let visibleItems = [...galleryItems];
+
+// Gallery Filter
+galleryFilterBtns.forEach(btn => {
   btn.addEventListener('click', () => {
-    openEnquireModal({
-      title: 'Download Official E-Brochure',
-      subtitle: 'Share your details and we will send the complete RISEONIC e-brochure instantly on WhatsApp.',
-      btnText: 'Download E-Brochure',
-    });
-  });
-});
+    galleryFilterBtns.forEach(b => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
 
-// Header + hello bar enquire buttons
-headerEnquireBtn?.addEventListener('click', () => openEnquireModal({ title: 'Enquire Now' }));
-helloInquiryBtn?.addEventListener('click', () => openEnquireModal({ title: 'Inquire Now' }));
-
-// Request Callback specific button
-requestCallbackBtn?.addEventListener('click', () => {
-  openEnquireModal({
-    title: 'Request Callback',
-    subtitle: 'Our senior luxury property consultant will call you back within a few hours.',
-    btnText: 'Request Callback',
-  });
-});
-
-// ======================================================
-// CALL BUTTON (opens prompt for number)
-// ======================================================
-function handleCallClick() {
-  const num = prompt('Enter your phone number and we\'ll call you back:\n(Or call us directly: 9878249224)');
-  if (num && num.trim().length >= 10) {
-    alert(`Thank you! Our team will call you back at ${num.trim()} within a few hours. You can also reach us directly at 9878249224.`);
-    // WhatsApp redirect for callback confirmation
-    const msg = encodeURIComponent(`Hi RISEONIC Team, please call me back at ${num.trim()}. I'm interested in the project.`);
-    window.open(`https://api.whatsapp.com/send?phone=919878249224&text=${msg}`, '_blank');
-  } else if (num !== null) {
-    // Direct call as fallback
-    window.location.href = 'tel:9878249224';
-  }
-}
-headerCallBtn?.addEventListener('click', handleCallClick);
-helloCallBtn?.addEventListener('click', handleCallClick);
-
-// ======================================================
-// VIRTUAL TOUR — GATED (form → then video)
-// ======================================================
-function openTourGate() {
-  openModal(tourGateModal);
-}
-virtualTourThumb?.addEventListener('click', openTourGate);
-openVirtualTourBtn?.addEventListener('click', openTourGate);
-
-tourGateForm?.addEventListener('submit', e => {
-  e.preventDefault();
-  const name  = document.getElementById('tourName')?.value || '';
-  const phone = document.getElementById('tourPhone')?.value || '';
-  if (!name || !phone) return;
-
-  closeModal(tourGateModal);
-  tourGateForm.reset();
-
-  // Open video
-  setTimeout(() => {
-    openVideoModal();
-  }, 200);
-});
-
-// ======================================================
-// VIDEO MODAL
-// ======================================================
-function openVideoModal() {
-  if (videoIframe) {
-    videoIframe.src = `https://www.youtube.com/embed/${YOUTUBE_VIDEO_ID}?autoplay=1&rel=0&modestbranding=1`;
-  }
-  openModal(videoModal);
-}
-
-function stopVideo() {
-  if (videoIframe) {
-    videoIframe.src = '';
-  }
-}
-
-// ======================================================
-// GALLERY LIGHTBOX
-// ======================================================
-window.openLightbox = function(src, caption) {
-  if (lightboxImg)     lightboxImg.src = src;
-  if (lightboxCaption) lightboxCaption.textContent = caption;
-  openModal(galleryLightbox);
-};
-
-// ======================================================
-// GALLERY FILTER TABS
-// ======================================================
-const filterBtns  = document.querySelectorAll('.gallery-filter-btn');
-const galleryItems = document.querySelectorAll('.photo-gallery-item');
-
-filterBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
     const filter = btn.dataset.filter;
-    filterBtns.forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    visibleItems = [];
 
     galleryItems.forEach(item => {
       const cat = item.dataset.category;
       if (filter === 'all' || cat === filter) {
-        item.style.display = '';
-        item.style.opacity = '1';
+        item.hidden = false;
+        visibleItems.push(item);
       } else {
-        item.style.opacity = '0';
-        item.style.display = 'none';
+        item.hidden = true;
       }
     });
   });
 });
 
-// ======================================================
-// CONFIG TABS (Floor Plans)
-// ======================================================
-const configTabs   = document.querySelectorAll('.config-tab');
-const configPanels = document.querySelectorAll('.config-panel');
+// Open Lightbox
+function openLightbox(index) {
+  const item = visibleItems[index];
+  if (!item) return;
+  const img = $('img', item);
+  const cap = $('figcaption', item);
+  lightboxImg.src = img.src;
+  lightboxImg.alt = img.alt;
+  lightboxCaption.textContent = cap?.textContent || '';
+  currentLightboxIndex = index;
+  lightbox.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
 
-configTabs.forEach(tab => {
-  tab.addEventListener('click', () => {
-    const target = tab.dataset.config;
-    configTabs.forEach(t => { t.classList.remove('is-active'); t.setAttribute('aria-selected', 'false'); });
-    configPanels.forEach(p => { p.classList.remove('is-active'); p.hidden = true; });
-    tab.classList.add('is-active');
-    tab.setAttribute('aria-selected', 'true');
-    const panel = document.getElementById(`panel-${target}`);
-    if (panel) { panel.classList.add('is-active'); panel.hidden = false; }
+function closeLightbox() {
+  lightbox.hidden = true;
+  document.body.style.overflow = '';
+  lightboxImg.src = '';
+}
+
+function lightboxNavigate(dir) {
+  currentLightboxIndex = (currentLightboxIndex + dir + visibleItems.length) % visibleItems.length;
+  openLightbox(currentLightboxIndex);
+}
+
+galleryItems.forEach((item, i) => {
+  item.addEventListener('click', () => {
+    const vi = visibleItems.indexOf(item);
+    if (vi !== -1) openLightbox(vi);
+  });
+  item.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); item.click(); }
   });
 });
 
-// ======================================================
-// FAQ ACCORDION
-// ======================================================
-const faqItems = document.querySelectorAll('.faq-item');
+lightboxClose?.addEventListener('click', closeLightbox);
+lightboxOverlay?.addEventListener('click', closeLightbox);
+lightboxPrev?.addEventListener('click', () => lightboxNavigate(-1));
+lightboxNext?.addEventListener('click', () => lightboxNavigate(1));
+
+document.addEventListener('keydown', (e) => {
+  if (!lightbox.hidden) {
+    if (e.key === 'ArrowLeft') lightboxNavigate(-1);
+    if (e.key === 'ArrowRight') lightboxNavigate(1);
+  }
+});
+
+// Touch swipe for lightbox
+let touchStartX = 0;
+lightbox?.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].clientX; }, { passive: true });
+lightbox?.addEventListener('touchend', (e) => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 50) lightboxNavigate(dx < 0 ? 1 : -1);
+});
+
+/* ─── FAQ Accordion ─── */
+const faqItems = $$('.faq-item');
+
 faqItems.forEach(item => {
-  const btn = item.querySelector('.faq-question');
+  const btn = $('.faq-question', item);
+  const answer = $('.faq-answer', item);
+
   btn?.addEventListener('click', () => {
-    const isOpen = item.classList.contains('is-open');
-    faqItems.forEach(i => { i.classList.remove('is-open'); i.querySelector('.faq-question')?.setAttribute('aria-expanded', 'false'); });
-    if (!isOpen) {
-      item.classList.add('is-open');
-      btn.setAttribute('aria-expanded', 'true');
-    }
+    const isOpen = btn.getAttribute('aria-expanded') === 'true';
+
+    // Close all others
+    faqItems.forEach(other => {
+      if (other !== item) {
+        $('.faq-question', other)?.setAttribute('aria-expanded', 'false');
+        $('.faq-answer', other)?.classList.remove('is-open');
+      }
+    });
+
+    btn.setAttribute('aria-expanded', String(!isOpen));
+    answer.classList.toggle('is-open', !isOpen);
   });
 });
 
-// ======================================================
-// FORM SUBMISSION HANDLER
-// ======================================================
-function handleFormSubmit(e, form, btnEl, successCallback) {
-  e.preventDefault();
-  const name  = form.querySelector('[name="name"]')?.value?.trim()   || 'Valued Visitor';
-  const phone = form.querySelector('[name="phone"]')?.value?.trim()  || '';
-  const unit  = form.querySelector('[name="unit"]')?.value?.trim()   || 'General Enquiry';
+/* ─── Toast Notification ─── */
+const toast = $('#toast');
+const toastMessage = $('#toastMessage');
+let toastTimeout = null;
 
-  if (!phone || phone.length < 10) {
-    form.querySelector('[name="phone"]')?.focus();
+function showToast(message = 'Thank you! We'll be in touch shortly.') {
+  if (!toast) return;
+  clearTimeout(toastTimeout);
+  toastMessage.textContent = message;
+  toast.classList.add('is-visible');
+  toastTimeout = setTimeout(() => toast.classList.remove('is-visible'), 4500);
+}
+
+/* ─── Form Submission ─── */
+function handleFormSubmit(form) {
+  const nameInput = form.querySelector('input[name="name"]');
+  const phoneInput = form.querySelector('input[name="phone"]');
+  const submitBtn = form.querySelector('button[type="submit"]');
+
+  const name = nameInput?.value.trim() || '';
+  const phone = phoneInput?.value.trim() || '';
+
+  // Basic validation
+  if (!name) {
+    nameInput?.focus();
+    nameInput?.classList.add('input-error');
+    setTimeout(() => nameInput?.classList.remove('input-error'), 2000);
     return;
   }
 
-  const origText = btnEl?.textContent;
-  if (btnEl) { btnEl.textContent = 'Sending…'; btnEl.disabled = true; }
+  if (!phone || phone.replace(/\D/g, '').length < 10) {
+    phoneInput?.focus();
+    phoneInput?.classList.add('input-error');
+    setTimeout(() => phoneInput?.classList.remove('input-error'), 2000);
+    return;
+  }
 
-  setTimeout(() => {
-    if (btnEl) { btnEl.textContent = '✓ Received!'; btnEl.style.background = '#10b981'; }
+  // Disable button
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending...';
+  }
 
-    const waMsg = encodeURIComponent(`Hi RISEONIC Team,\nName: ${name}\nPhone: ${phone}\nInterested in: ${unit}\n\nPlease share price details and site visit information.`);
-    const waUrl = `https://api.whatsapp.com/send?phone=919878249224&text=${waMsg}`;
+  // Build WhatsApp message
+  const configEl = form.querySelector('select[name="config"]');
+  const config = configEl?.value || selectedUnitType || '';
+  const formId = form.id || 'lead';
+  const msg = encodeURIComponent(
+    `Hi! I'm interested in RISEONIC New Chandigarh.\n\nName: ${name}\nPhone: +91 ${phone}${config ? `\nInterested in: ${config}` : ''}\n\nPlease share details.`
+  );
 
-    setTimeout(() => {
-      window.open(waUrl, '_blank');
-      form.reset();
-      if (btnEl) {
-        btnEl.textContent = origText;
-        btnEl.disabled = false;
-        btnEl.style.background = '';
+  // Send to WhatsApp
+  window.open(`${WHATSAPP_BASE}?text=${msg}`, '_blank', 'noopener,noreferrer');
+
+  // Reset
+  form.reset();
+  if (submitBtn) {
+    submitBtn.disabled = false;
+    submitBtn.textContent = submitBtn.dataset.originalText || 'Submit';
+  }
+
+  // Close modal if modal form
+  if (form.id === 'modalForm') {
+    setTimeout(closeModal, 400);
+  }
+
+  showToast('✓ Thank you! We\'ll be in touch within a few hours.');
+}
+
+// Store original button texts
+$$('button[type="submit"]').forEach(btn => {
+  btn.dataset.originalText = btn.textContent.trim();
+});
+
+// Attach form handlers
+['heroForm', 'modalForm', 'contactForm'].forEach(id => {
+  const form = $(`#${id}`);
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    handleFormSubmit(form);
+  });
+});
+
+// Input error style (inline)
+const style = document.createElement('style');
+style.textContent = `
+  .input-error {
+    border-color: #ff4444 !important;
+    animation: shake 0.4s ease;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+`;
+document.head.appendChild(style);
+
+/* ─── Scroll Reveal ─── */
+const revealEls = $$('.reveal-left, .reveal-right, .reveal-up');
+
+const revealObserver = new IntersectionObserver(
+  (entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        revealObserver.unobserve(entry.target);
       }
-      if (successCallback) successCallback();
-    }, 700);
-  }, 900);
+    });
+  },
+  { threshold: 0.12, rootMargin: '0px 0px -48px 0px' }
+);
+
+revealEls.forEach(el => revealObserver.observe(el));
+
+/* ─── Animate Quick Fact Numbers ─── */
+function animateCounter(el, target, duration = 1600) {
+  const isFloat = target.toString().includes('.');
+  const parts = target.toString().split('.');
+  const decimals = isFloat ? parts[1].length : 0;
+  const start = performance.now();
+  const startVal = 0;
+
+  function tick(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const val = startVal + (parseFloat(target) - startVal) * eased;
+    el.textContent = isFloat ? val.toFixed(decimals) : Math.round(val);
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+
+  requestAnimationFrame(tick);
 }
 
-// Hero form
-heroForm?.addEventListener('submit', e => {
-  handleFormSubmit(e, heroForm, heroForm.querySelector('[type="submit"]'));
-});
+const quickFactNums = $$('.quick-fact-num');
+let factsAnimated = false;
 
-// Enquire modal form
-enquireModalForm?.addEventListener('submit', e => {
-  handleFormSubmit(e, enquireModalForm, modalSubmitBtn, () => closeModal(enquireModal));
-});
+const factsObserver = new IntersectionObserver(
+  (entries) => {
+    if (entries[0].isIntersecting && !factsAnimated) {
+      factsAnimated = true;
+      quickFactNums.forEach(el => {
+        const text = el.textContent.trim();
+        const numMatch = text.match(/^[\d.]+/);
+        if (numMatch) {
+          const num = parseFloat(numMatch[0]);
+          const suffix = text.replace(numMatch[0], '');
+          animateCounter({ textContent: '' }, num, 1800); // temp
+          // Real animation preserving suffix
+          let startTime = null;
+          function frame(ts) {
+            if (!startTime) startTime = ts;
+            const progress = Math.min((ts - startTime) / 1800, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const val = num * eased;
+            el.textContent = (num % 1 !== 0 ? val.toFixed(2) : Math.round(val)) + suffix;
+            if (progress < 1) requestAnimationFrame(frame);
+          }
+          requestAnimationFrame(frame);
+        }
+      });
+      factsObserver.disconnect();
+    }
+  },
+  { threshold: 0.5 }
+);
 
-// Contact / Book Visit form
-contactForm?.addEventListener('submit', e => {
-  handleFormSubmit(e, contactForm, contactForm.querySelector('[type="submit"]'));
-});
+const quickFacts = $('#quick-facts');
+if (quickFacts) factsObserver.observe(quickFacts);
 
-// ======================================================
-// SOCIAL PROOF TOAST
-// ======================================================
-const toasts = [
-  { dot: 'RS', text: '<strong>Rajinder S.</strong> from Chandigarh just <em>booked a site visit</em>' },
-  { dot: 'PK', text: '<strong>Dr. Priya K.</strong> from Panchkula <em>requested price details</em>' },
-  { dot: 'NRI', text: '<strong>Amarjeet K. (Canada)</strong> <em>downloaded the e-brochure</em>' },
-  { dot: 'AK', text: '<strong>Amrik S.</strong> from Mohali <em>enquired about 4 BHK + Servant</em>' },
-  { dot: 'SK', text: '<strong>Sumit K.</strong> from Sector 17 just <em>watched the virtual tour</em>' },
-];
-let toastIdx = 0;
+/* ─── Active Nav Highlight on Scroll ─── */
+const navLinks = $$('.site-nav a');
+const sections = $$('section[id]');
 
-function showToast() {
-  if (!socialToast || !toastText || !toastDot) return;
-  const t = toasts[toastIdx];
-  toastDot.textContent  = t.dot;
-  toastText.innerHTML   = t.text;
-  socialToast.classList.add('show');
-  setTimeout(() => socialToast.classList.remove('show'), 5000);
-  toastIdx = (toastIdx + 1) % toasts.length;
-}
+function updateActiveNav() {
+  const scrollY = window.scrollY + 120;
+  let active = '';
 
-setTimeout(() => {
-  showToast();
-  setInterval(showToast, 18000);
-}, 5000);
-
-// ======================================================
-// INTERSECTION OBSERVER — Animate sections on scroll
-// ======================================================
-const animEls = document.querySelectorAll('.section, .quick-fact, .why-choose-card, .testimonial-card, .faq-item');
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.style.opacity = '1';
-      entry.target.style.transform = 'translateY(0)';
-      observer.unobserve(entry.target);
+  sections.forEach(section => {
+    const top = section.offsetTop;
+    const height = section.offsetHeight;
+    if (scrollY >= top && scrollY < top + height) {
+      active = section.id;
     }
   });
-}, { threshold: 0.08 });
 
-animEls.forEach(el => {
-  if (!el.closest('.hero')) {
-    el.style.opacity    = '0';
-    el.style.transform  = 'translateY(18px)';
-    el.style.transition = 'opacity 0.55s ease, transform 0.55s ease';
-    observer.observe(el);
+  navLinks.forEach(link => {
+    const href = link.getAttribute('href')?.replace('#', '');
+    link.classList.toggle('nav-active', href === active);
+  });
+}
+
+// Add active nav style
+const navStyle = document.createElement('style');
+navStyle.textContent = `.site-nav a.nav-active { color: var(--gold-300) !important; }`;
+document.head.appendChild(navStyle);
+
+window.addEventListener('scroll', debounce(updateActiveNav, 50), { passive: true });
+
+/* ─── Smooth Scroll Polyfill ─── */
+$$('a[href^="#"]').forEach(link => {
+  link.addEventListener('click', (e) => {
+    const target = $(link.getAttribute('href'));
+    if (!target) return;
+    e.preventDefault();
+    const top = target.getBoundingClientRect().top + window.scrollY - 72;
+    window.scrollTo({ top, behavior: 'smooth' });
+  });
+});
+
+/* ─── Lazy Load Images (native + observer fallback) ─── */
+if ('loading' in HTMLImageElement.prototype) {
+  // Native lazy loading already applied via HTML attribute
+} else {
+  const lazyImages = $$('img[loading="lazy"]');
+  const imgObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const img = entry.target;
+        img.src = img.dataset.src || img.src;
+        imgObserver.unobserve(img);
+      }
+    });
+  });
+  lazyImages.forEach(img => imgObserver.observe(img));
+}
+
+/* ─── WhatsApp Float Button (hidden — using sticky bar instead on mobile) ─── */
+// The mobile sticky bar handles WhatsApp on mobile.
+// On desktop, the header button is always visible.
+
+/* ─── Page Visibility / Pause Carousel ─── */
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    clearInterval(carouselTimer);
+  } else {
+    startCarousel();
   }
 });
+
+/* ─── Init Complete Log ─── */
+console.log(
+  '%cRISEONIC%c | New Chandigarh\n%cTriCity\'s First Terrace Homes · G+35 Floors · Stadium Road PR-4',
+  'color: #B8975A; font-size: 20px; font-weight: bold; font-family: serif;',
+  'color: #888; font-size: 12px;',
+  'color: #555; font-size: 11px;'
+);
