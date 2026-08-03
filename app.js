@@ -95,7 +95,9 @@ function nextSlide() {
 }
 
 function startCarousel() {
-  carouselTimer = setInterval(nextSlide, 5000);
+  if (carouselSlides.length > 1) {
+    carouselTimer = setInterval(nextSlide, 5000);
+  }
 }
 
 function resetCarousel() {
@@ -145,8 +147,31 @@ const modalOverlay = $('#modalOverlay');
 const modalClose = $('#modalClose');
 let selectedUnitType = '';
 
-function openModal(unitType = '') {
+function openModal(unitType = '', titleText = 'Request Project Brochure', buttonText = 'Request Brochure') {
   selectedUnitType = unitType;
+  
+  // Dynamically update modal headers and buttons
+  const modalTitle = $('#modalTitle');
+  const modalSubmitBtn = $('#modalSubmitBtn');
+  const modalSub = $('#modalSub');
+  
+  if (modalTitle) modalTitle.textContent = titleText;
+  if (modalSubmitBtn) modalSubmitBtn.textContent = buttonText;
+  
+  if (modalSub) {
+    if (titleText.toLowerCase().includes('price') || titleText.toLowerCase().includes('pricing')) {
+      modalSub.textContent = 'Enquire now to receive the complete price list and payment plans.';
+    } else if (titleText.toLowerCase().includes('visit') || titleText.toLowerCase().includes('site')) {
+      modalSub.textContent = 'Schedule your private site visit and experience RISEONIC firsthand.';
+    } else if (titleText.toLowerCase().includes('brochure')) {
+      modalSub.textContent = 'Receive the complete price list, floor plans & brochure instantly.';
+    } else if (titleText.toLowerCase().includes('walkthrough')) {
+      modalSub.textContent = 'Enquire now to receive the complete HD walkthrough video and virtual tour.';
+    } else {
+      modalSub.textContent = 'Receive full project details and layouts instantly.';
+    }
+  }
+
   if (unitType) {
     const select = $('#modalConfigSelect');
     if (select) {
@@ -176,15 +201,20 @@ modalOverlay?.addEventListener('click', (e) => {
 // All enquire triggers
 $$('[data-action="enquire"]').forEach(el => {
   el.addEventListener('click', () => {
-    openModal(el.dataset.unitType || '');
+    const text = el.textContent.trim();
+    if (text.toLowerCase().includes('price')) {
+      openModal(el.dataset.unitType || '', 'Get Price Details', 'Get Price Details');
+    } else {
+      openModal(el.dataset.unitType || '', 'Request Project Brochure', 'Request Brochure');
+    }
   });
 });
 
 // Header/hero/section CTAs
-$('#heroSiteVisitBtn')?.addEventListener('click', () => openModal());
-$('#headerEnquireBtn')?.addEventListener('click', () => openModal());
-$('#lifestyleEnquireBtn')?.addEventListener('click', () => openModal('Brochure Request'));
-$('#mobileEnquireBtn')?.addEventListener('click', () => openModal());
+$('#heroSiteVisitBtn')?.addEventListener('click', () => openModal('', 'Book a Site Visit', 'Book Site Visit'));
+$('#headerEnquireBtn')?.addEventListener('click', () => openModal('', 'Request Project Brochure', 'Request Brochure'));
+$('#lifestyleEnquireBtn')?.addEventListener('click', () => openModal('Brochure Request', 'Request Project Brochure', 'Request Brochure'));
+$('#mobileEnquireBtn')?.addEventListener('click', () => openModal('', 'Book a Site Visit', 'Book Site Visit'));
 
 /* ─── Master Plan Modal ─── */
 const masterplanModal = $('#masterplanModal');
@@ -208,21 +238,17 @@ masterplanModal?.addEventListener('click', (e) => {
   }
 });
 
-/* ─── Video Player ─── */
-const videoThumb = $('#videoThumb');
+/* ─── Video Player Lead Form ─── */
 const videoPlayBtn = $('#videoPlayBtn');
-const videoIframeWrapper = $('#videoIframeWrapper');
-const youtubeIframe = $('#youtubeIframe');
 
-function initVideo() {
-  videoThumb.style.display = 'none';
-  videoIframeWrapper.hidden = false;
-  youtubeIframe.src = youtubeIframe.dataset.src;
-}
-
-videoPlayBtn?.addEventListener('click', initVideo);
+videoPlayBtn?.addEventListener('click', () => {
+  openModal('Walkthrough Request', 'Request Walkthrough Video', 'Request Walkthrough');
+});
 videoPlayBtn?.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); initVideo(); }
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    openModal('Walkthrough Request', 'Request Walkthrough Video', 'Request Walkthrough');
+  }
 });
 
 /* ─── Gallery Filter & Lightbox ─── */
@@ -342,7 +368,7 @@ const toast = $('#toast');
 const toastMessage = $('#toastMessage');
 let toastTimeout = null;
 
-function showToast(message = 'Thank you! We'll be in touch shortly.') {
+function showToast(message = "Thank you! We'll be in touch shortly.") {
   if (!toast) return;
   clearTimeout(toastTimeout);
   toastMessage.textContent = message;
@@ -383,9 +409,11 @@ function handleFormSubmit(form) {
   // Build WhatsApp message
   const configEl = form.querySelector('select[name="config"]');
   const config = configEl?.value || selectedUnitType || '';
+  const budgetEl = form.querySelector('input[name="budget"]:checked');
+  const budget = budgetEl?.value || '';
   const formId = form.id || 'lead';
   const msg = encodeURIComponent(
-    `Hi! I'm interested in RISEONIC New Chandigarh.\n\nName: ${name}\nPhone: +91 ${phone}${config ? `\nInterested in: ${config}` : ''}\n\nPlease share details.`
+    `Hi! I'm interested in RISEONIC New Chandigarh.\n\nName: ${name}\nPhone: +91 ${phone}${config ? `\nInterested in: ${config}` : ''}${budget ? `\nBudget: ${budget}` : ''}\n\nPlease share details.`
   );
 
   // Send to WhatsApp
@@ -524,6 +552,11 @@ function updateActiveNav() {
     }
   });
 
+  if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 60) {
+    const lastLink = navLinks[navLinks.length - 1];
+    active = lastLink?.getAttribute('href')?.replace('#', '') || '';
+  }
+
   navLinks.forEach(link => {
     const href = link.getAttribute('href')?.replace('#', '');
     link.classList.toggle('nav-active', href === active);
@@ -576,6 +609,60 @@ document.addEventListener('visibilitychange', () => {
   } else {
     startCarousel();
   }
+});
+
+/* ─── Configurations Gallery Slider ─── */
+const galleries = $$('.config-gallery');
+galleries.forEach(gallery => {
+  const mainImg = gallery.querySelector('.gallery-main');
+  const thumbs = gallery.querySelectorAll('.thumb-btn');
+  let currentIndex = 0;
+  let timer = null;
+
+  function showImage(index) {
+    if (index < 0 || index >= thumbs.length) return;
+    currentIndex = index;
+    const activeThumb = thumbs[index];
+    const src = activeThumb.getAttribute('data-src');
+
+    // Fade out transition
+    mainImg.style.opacity = '0.3';
+    setTimeout(() => {
+      mainImg.src = src;
+      mainImg.style.opacity = '1';
+    }, 150);
+
+    thumbs.forEach(t => t.classList.remove('is-active'));
+    activeThumb.classList.add('is-active');
+  }
+
+  function nextImage() {
+    const nextIndex = (currentIndex + 1) % thumbs.length;
+    showImage(nextIndex);
+  }
+
+  function startAutoPlay() {
+    if (thumbs.length > 1) {
+      timer = setInterval(nextImage, 5000);
+    }
+  }
+
+  function stopAutoPlay() {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+  }
+
+  thumbs.forEach((thumb, idx) => {
+    thumb.addEventListener('click', () => {
+      stopAutoPlay();
+      showImage(idx);
+      startAutoPlay();
+    });
+  });
+
+  startAutoPlay();
 });
 
 /* ─── Init Complete Log ─── */
