@@ -581,7 +581,7 @@ ul {
 
 .hero-tagline {
   font-size: clamp(1rem, 2vw, 1.2rem);
-  color: var(--dark-700);
+  color: #ffffff;
   margin-bottom: 36px;
   max-width: 520px;
   line-height: 1.7;
