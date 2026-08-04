@@ -854,7 +854,7 @@ ul {
   font-family: var(--font-display);
   font-size: clamp(1.4rem, 3vw, 2rem);
   font-weight: 300;
-  color: var(--gold-300);
+  color: var(--gold-600);
   line-height: 1;
 }
 
@@ -863,11 +863,11 @@ ul {
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--dark-500);
+  color: var(--dark-700);
 }
 
 .quick-fact-highlight .quick-fact-num {
-  color: var(--gold-600);
+  color: var(--gold-700);
 }
 
 /* ─── About Section ─── */
