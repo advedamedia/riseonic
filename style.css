@@ -2214,7 +2214,7 @@ ul {
   transition: background 0.2s;
 }
 
-.sticky-call { color: rgba(255, 255, 255, 0.75); }
+.sticky-call { color: var(--dark-700); }
 .sticky-call:hover { background: var(--light-200); }
 
 .sticky-whatsapp { color: #25D366; }
@@ -2721,7 +2721,7 @@ ul {
 
   /* Mobile sticky bar */
   .mobile-sticky-bar {
-  display: none;
+  display: flex;
   position: fixed;
   bottom: 0;
   left: 0;

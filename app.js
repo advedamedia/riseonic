@@ -147,7 +147,7 @@ const modalOverlay = $('#modalOverlay');
 const modalClose = $('#modalClose');
 let selectedUnitType = '';
 
-function openModal(unitType = '', titleText = 'Request Project Brochure', buttonText = 'Request Brochure') {
+function openModal(unitType = '', titleText = 'Enquire Now', buttonText = 'Enquire Now') {
   selectedUnitType = unitType;
   
   // Dynamically update modal headers and buttons
@@ -205,16 +205,16 @@ $$('[data-action="enquire"]').forEach(el => {
     if (text.toLowerCase().includes('price')) {
       openModal(el.dataset.unitType || '', 'Get Price Details', 'Get Price Details');
     } else {
-      openModal(el.dataset.unitType || '', 'Request Project Brochure', 'Request Brochure');
+      openModal(el.dataset.unitType || '', 'Enquire Now', 'Enquire Now');
     }
   });
 });
 
 // Header/hero/section CTAs
 $('#heroSiteVisitBtn')?.addEventListener('click', () => openModal('', 'Book a Site Visit', 'Book Site Visit'));
-$('#headerEnquireBtn')?.addEventListener('click', () => openModal('', 'Request Project Brochure', 'Request Brochure'));
-$('#lifestyleEnquireBtn')?.addEventListener('click', () => openModal('Brochure Request', 'Request Project Brochure', 'Request Brochure'));
-$('#mobileEnquireBtn')?.addEventListener('click', () => openModal('', 'Book a Site Visit', 'Book Site Visit'));
+$('#headerEnquireBtn')?.addEventListener('click', () => openModal('', 'Enquire Now', 'Enquire Now'));
+$('#lifestyleEnquireBtn')?.addEventListener('click', () => openModal('Enquire Request', 'Enquire Now', 'Enquire Now'));
+$('#mobileEnquireBtn')?.addEventListener('click', () => openModal('', 'Enquire Now', 'Enquire Now'));
 
 /* ─── Master Plan Modal ─── */
 const masterplanModal = $('#masterplanModal');
