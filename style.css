@@ -2492,7 +2492,7 @@ ul {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  .quick-fact { border-right: 1px solid rgba(255, 255, 255, 0.06); }
+  .quick-fact { border-right: 1px solid var(--light-300); }
   .quick-fact:nth-child(3n) { border-right: none; }
 
   .about-grid { gap: 48px; }
@@ -2619,8 +2619,8 @@ ul {
 
   .quick-fact {
     width: 50%;
-    border-right: 1px solid rgba(255, 255, 255, 0.06);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-right: 1px solid var(--light-300);
+    border-bottom: 1px solid var(--light-300);
   }
 
   .quick-fact:nth-child(2n) {
@@ -2768,19 +2768,20 @@ ul {
   .quick-fact {
     width: 33.33%;
     padding: 20px 10px;
-    border-right: 1px solid rgba(255, 255, 255, 0.06);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-right: 1px solid var(--light-300);
+    border-bottom: 1px solid var(--light-300);
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
   }
 
-  .quick-fact-num { font-size: 1.2rem; }
+  .quick-fact-num { font-size: 1.2rem; font-weight: 600; }
 
   .quick-fact-label {
     font-size: 0.6rem;
     text-align: center;
+    font-weight: 700;
   }
 
   .quick-fact:nth-child(3n) {
