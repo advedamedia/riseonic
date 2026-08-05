@@ -68,7 +68,7 @@ body {
   font-family: var(--font-body);
   font-weight: 400;
   line-height: 1.7;
-  color: var(--dark-700);
+  color: var(--light-200);
   background: var(--light-100);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
@@ -2460,3 +2460,282 @@ ul {
   .section { padding: 40px 0; }
   body { color: #000; }
 }
+
+/* ============================================
+   LANDMARK DESIGN SYSTEM ADDITIONS
+   ============================================ */
+
+/* --- Top Announcement Bar --- */
+.announcement-bar {
+  width: 100%;
+  min-height: 40px;
+  background: linear-gradient(135deg, #d97706, #f59e0b, #fbbf24);
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 16px;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  position: relative;
+  z-index: 1001;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+.announcement-sparkle {
+  color: #000;
+  animation: announcement-pulse 1.5s infinite;
+}
+.announcement-cta {
+  background: #000;
+  color: #fcd34d;
+  padding: 3px 12px;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-decoration: none;
+  margin-left: 6px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.announcement-cta:hover {
+  background: #111;
+  color: #fff;
+  transform: scale(1.05);
+}
+
+@keyframes announcement-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+/* Header Position Adjust for Announcement Bar */
+.site-header {
+  top: 40px !important;
+}
+.site-header.is-scrolled {
+  top: 0 !important;
+}
+
+@media (max-width: 768px) {
+  .announcement-bar {
+    display: none;
+  }
+  .site-header {
+    top: 0 !important;
+  }
+}
+
+/* --- Floating WhatsApp CTA --- */
+.floating-whatsapp {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 999;
+  background: #25D366;
+  color: #fff;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  box-shadow: 0 10px 25px rgba(37, 211, 102, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: whatsapp-bounce 2.5s infinite;
+  text-decoration: none;
+}
+.floating-whatsapp:hover {
+  background: #20ba5a;
+  transform: scale(1.1);
+  box-shadow: 0 12px 30px rgba(37, 211, 102, 0.5);
+}
+.floating-whatsapp svg {
+  width: 28px;
+  height: 28px;
+  fill: #fff;
+}
+.whatsapp-tooltip {
+  position: absolute;
+  right: 70px;
+  background: #101420;
+  color: #f8fafc;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  border: 1px solid rgba(245,158,11,0.2);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+.floating-whatsapp:hover .whatsapp-tooltip {
+  opacity: 1;
+  visibility: visible;
+  right: 66px;
+}
+
+@keyframes whatsapp-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@media (max-width: 768px) {
+  .floating-whatsapp {
+    bottom: 84px; /* Move above sticky action footer on mobile */
+  }
+}
+
+/* --- Card Styles Alignments --- */
+.highlight-card, .amenity-group {
+  background: var(--dark-700) !important;
+  border: 1px solid rgba(245, 158, 11, 0.15) !important;
+  border-radius: 24px !important;
+  padding: 36px 32px !important;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2) !important;
+  transition: all 0.35s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+  position: relative;
+  overflow: hidden;
+}
+.highlight-card::after, .amenity-group::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 90px;
+  height: 90px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.highlight-card:hover, .amenity-group:hover {
+  border-color: rgba(245, 158, 11, 0.5) !important;
+  transform: translateY(-6px) !important;
+  box-shadow: 0 20px 45px rgba(245, 158, 11, 0.06) !important;
+}
+.highlight-card h3 {
+  color: var(--light-200) !important;
+  font-family: var(--font-heading) !important;
+  font-size: 1.25rem !important;
+  font-weight: 500 !important;
+  margin: 16px 0 12px !important;
+}
+.highlight-card p, .amenity-list li {
+  color: var(--light-300) !important;
+  font-size: 0.95rem !important;
+  line-height: 1.6 !important;
+}
+.highlight-icon svg {
+  color: var(--gold-500) !important;
+}
+
+/* --- Pricing Section Card Conversion --- */
+.pricing-table {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important;
+  gap: 32px !important;
+  border: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  max-width: 1000px !important;
+  margin: 48px auto 0 !important;
+  overflow: visible !important;
+}
+.pricing-row {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 18px !important;
+  padding: 40px !important;
+  background: var(--dark-700) !important;
+  border: 1px solid rgba(245, 158, 11, 0.18) !important;
+  border-radius: 28px !important;
+  transition: all 0.35s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+  position: relative !important;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2) !important;
+}
+.pricing-row::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.pricing-row:hover {
+  border-color: var(--gold-500) !important;
+  transform: translateY(-6px) !important;
+  box-shadow: 0 20px 45px rgba(245, 158, 11, 0.08) !important;
+}
+.pricing-row-head {
+  display: none !important;
+}
+.pricing-row-featured {
+  border: 2px solid var(--gold-500) !important;
+  background: var(--dark-700) !important;
+}
+.pricing-config {
+  font-family: var(--font-heading) !important;
+  font-size: 1.4rem !important;
+  font-weight: 600 !important;
+  color: var(--light-200) !important;
+  margin-bottom: 4px !important;
+}
+.pricing-area {
+  color: var(--light-400) !important;
+  font-size: 0.95rem !important;
+  margin-bottom: 8px !important;
+}
+.pricing-price {
+  font-family: var(--font-display) !important;
+  font-size: 1.8rem !important;
+  font-weight: 700 !important;
+  color: var(--gold-400) !important;
+  margin-bottom: 12px !important;
+}
+.pricing-row .btn {
+  width: 100% !important;
+  margin-top: 10px !important;
+  text-align: center !important;
+  justify-content: center !important;
+}
+
+/* Form Dark Inputs */
+.form-group input, .form-group select, .form-group textarea {
+  background: var(--dark-700) !important;
+  border: 1px solid var(--dark-600) !important;
+  color: var(--light-200) !important;
+  border-radius: 12px !important;
+  padding: 14px 18px !important;
+  transition: all 0.3s ease !important;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  border-color: var(--gold-500) !important;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.1) !important;
+  outline: none !important;
+}
+.form-group label {
+  color: var(--light-300) !important;
+}
+
+/* Modals Dark Mode */
+.modal-card {
+  background: var(--dark-800) !important;
+  border: 1px solid rgba(245, 158, 11, 0.2) !important;
+  border-radius: 28px !important;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.5) !important;
+}
+.modal-title {
+  color: var(--light-200) !important;
+  font-family: var(--font-heading) !important;
+}
+
